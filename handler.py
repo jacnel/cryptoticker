@@ -74,7 +74,7 @@ def handle_session_end_request():
         card_title, speech_output, None, should_end_session))
 
 
-def get_bitcoin_price(intent, session):
+def get_bitcoin_price():
     card_title = "Bitcoin Price"
     response = requests.get('https://api.coinbase.com/v2/prices/BTC-USD/spot')
     price = response.json()['data']['amount']
@@ -87,20 +87,20 @@ def get_bitcoin_price(intent, session):
     return build_response({}, build_speechlet_response(card_title, speech_output, None, should_end_session=True))
 
 
-def get_ether_price(intent, session):
-    card_title = "Ether Price"
+def get_ether_price():
+    card_title = "Ethereum Price"
     response = requests.get('https://api.coinbase.com/v2/prices/ETH-USD/spot')
     price = response.json()['data']['amount']
-    log_price(price, 'ether')
+    log_price(price, 'ethereum')
     if price is None:
-        speech_output = "The price of ether could not be retrieved at this time. Sorry."
+        speech_output = "The price of ethereum could not be retrieved at this time. Sorry."
     else:
         dollars_and_cents = price.split('.')
         speech_output = "The current price of ether is " + dollars_and_cents[0] + " dollars and " + dollars_and_cents[1] + " cents."
     return build_response({}, build_speechlet_response(card_title, speech_output, None, should_end_session=True))
 
 
-def get_litecoin_price(intent, session):
+def get_litecoin_price():
     card_title = "Litecoin Price"
     response = requests.get('https://api.coinbase.com/v2/prices/LTC-USD/spot')
     price = response.json()['data']['amount']
@@ -112,8 +112,16 @@ def get_litecoin_price(intent, session):
         speech_output = "The current price of litecoin is " + dollars_and_cents[0] + " dollars and " + dollars_and_cents[1] + " cents."
     return build_response({}, build_speechlet_response(card_title, speech_output, None, should_end_session=True))
 
-def get_price(intent, seession):
-    pass
+def get_price(intent, session):
+    slot_value = intent['slots']['Currency']['value']
+    if slot_value == 'Bitcoin':
+        return get_bitcoin_price()
+    elif slot_value == 'Ethereum':
+        return get_ether_price()
+    elif slot_value == 'Litecoin':
+        return get_litecoin_price()
+
+
 
 def log_price(price, cointype):
     print("Price of " + cointype + ": " + price)
@@ -149,12 +157,8 @@ def on_intent(intent_request, session):
     intent_name = intent_request['intent']['name']
 
     # Dispatch to your skill's intent handlers
-    if intent_name == "GetBitcoinPriceIntent":
-        return get_bitcoin_price(intent, session)
-    elif intent_name == "GetEtherPriceIntent":
-        return get_ether_price(intent, session)
-    elif intent_name == "GetLitecoinPriceIntent":
-        return get_litecoin_price(intent, session)
+    if intent_name == "GetPriceIntent":
+        return get_price(intent, session)
     elif intent_name == "AMAZON.HelpIntent":
         return get_welcome_response()
     elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":
